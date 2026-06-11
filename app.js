@@ -1003,7 +1003,8 @@ function saveParamsToLocalStorage() {
         avgHours2: document.getElementById('avg_hours_per_shift_2').value,
         startTimeLimit2: document.getElementById('start_time_limit_2').value,
         endTimeLimit2: document.getElementById('end_time_limit_2').value,
-        jobRatio: document.getElementById('job_ratio').value
+        jobRatio: document.getElementById('job_ratio').value,
+        isShiftProposed: isShiftProposed
     };
     localStorage.setItem('tabi_planner_user_params', JSON.stringify(params));
 }
@@ -1083,6 +1084,9 @@ function loadFromLocalStorage() {
                 const ratioInput = document.getElementById('job_ratio');
                 ratioInput.value = params.jobRatio;
                 document.getElementById('job_ratio_value').textContent = `バイト1 ${10 - params.jobRatio} : バイト2 ${params.jobRatio}`;
+            }
+            if (params.isShiftProposed !== undefined) {
+                isShiftProposed = params.isShiftProposed;
             }
         } catch (e) {
             console.error('Failed to parse user params from localStorage', e);
