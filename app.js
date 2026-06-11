@@ -75,6 +75,9 @@ document.addEventListener('DOMContentLoaded', () => {
     defaultDeadline.setMonth(defaultDeadline.getMonth() + 3);
     deadlineDateInput.value = formatDateLocal(defaultDeadline);
     
+    // localStorageからデータをロードして反映
+    loadFromLocalStorage();
+    
     // イベントリスナーの設定
     deadlineTypeRadios.forEach(radio => {
         radio.addEventListener('change', (e) => {
@@ -180,6 +183,17 @@ document.addEventListener('DOMContentLoaded', () => {
             calculateAndRender();
         }
     });
+
+    // 全てリセットボタンの処理
+    const resetAllBtn = document.getElementById('reset-all-btn');
+    if (resetAllBtn) {
+        resetAllBtn.addEventListener('click', () => {
+            if (confirm('入力した条件やカレンダーの予定をすべてリセットしますか？')) {
+                localStorage.clear();
+                location.reload();
+            }
+        });
+    }
 
     // 初回計算
     calculateAndRender();
@@ -584,6 +598,10 @@ function renderModalSchedulesList(dateStr) {
  * シミュレーション計算とUIへの描画
  */
 function calculateAndRender() {
+    // 状態をlocalStorageに自動保存
+    saveParamsToLocalStorage();
+    saveSchedulesToLocalStorage();
+
     const targetAmount = parseInt(document.getElementById('target_amount').value) || 0;
     const currentSavings = parseInt(document.getElementById('current_savings').value) || 0;
     
@@ -963,4 +981,111 @@ function updateChart(labels, savings1, savings2, targetAmount) {
             }
         }
     });
+}
+
+/**
+ * 入力パラメータをlocalStorageへ保存
+ */
+function saveParamsToLocalStorage() {
+    const params = {
+        targetAmount: document.getElementById('target_amount').value,
+        currentSavings: document.getElementById('current_savings').value,
+        deadlineType: document.querySelector('input[name="deadline_type"]:checked')?.value || 'date',
+        deadlineDate: document.getElementById('deadline_date').value,
+        deadlinePeriod: document.getElementById('deadline_period').value,
+        deadlineUnit: document.getElementById('deadline_unit').value,
+        hourlyWage1: document.getElementById('hourly_wage_1').value,
+        avgHours1: document.getElementById('avg_hours_per_shift_1').value,
+        startTimeLimit1: document.getElementById('start_time_limit_1').value,
+        endTimeLimit1: document.getElementById('end_time_limit_1').value,
+        premiumToggle: document.getElementById('premium_toggle').checked,
+        hourlyWage2: document.getElementById('hourly_wage_2').value,
+        avgHours2: document.getElementById('avg_hours_per_shift_2').value,
+        startTimeLimit2: document.getElementById('start_time_limit_2').value,
+        endTimeLimit2: document.getElementById('end_time_limit_2').value,
+        jobRatio: document.getElementById('job_ratio').value
+    };
+    localStorage.setItem('tabi_planner_user_params', JSON.stringify(params));
+}
+
+/**
+ * 予定データをlocalStorageへ保存
+ */
+function saveSchedulesToLocalStorage() {
+    localStorage.setItem('tabi_planner_user_schedules', JSON.stringify(userSchedules));
+}
+
+/**
+ * localStorageから設定および予定データを読み込んで復元
+ */
+function loadFromLocalStorage() {
+    // 予定データの読み込み
+    const savedScheds = localStorage.getItem('tabi_planner_user_schedules');
+    if (savedScheds) {
+        try {
+            userSchedules = JSON.parse(savedScheds);
+        } catch (e) {
+            console.error('Failed to parse user schedules from localStorage', e);
+        }
+    }
+
+    // パラメータの読み込み
+    const savedParams = localStorage.getItem('tabi_planner_user_params');
+    if (savedParams) {
+        try {
+            const params = JSON.parse(savedParams);
+            
+            if (params.targetAmount) document.getElementById('target_amount').value = params.targetAmount;
+            if (params.currentSavings) document.getElementById('current_savings').value = params.currentSavings;
+            
+            if (params.deadlineType) {
+                const radio = document.querySelector(`input[name="deadline_type"][value="${params.deadlineType}"]`);
+                if (radio) {
+                    radio.checked = true;
+                    const dateGrp = document.getElementById('deadline-date-group');
+                    const periodGrp = document.getElementById('deadline-period-group');
+                    if (params.deadlineType === 'date') {
+                        dateGrp.classList.remove('hidden');
+                        periodGrp.classList.add('hidden');
+                    } else {
+                        dateGrp.classList.add('hidden');
+                        periodGrp.classList.remove('hidden');
+                    }
+                }
+            }
+            
+            if (params.deadlineDate) document.getElementById('deadline_date').value = params.deadlineDate;
+            if (params.deadlinePeriod) document.getElementById('deadline_period').value = params.deadlinePeriod;
+            if (params.deadlineUnit) document.getElementById('deadline_unit').value = params.deadlineUnit;
+            
+            if (params.hourlyWage1) document.getElementById('hourly_wage_1').value = params.hourlyWage1;
+            if (params.avgHours1) document.getElementById('avg_hours_per_shift_1').value = params.avgHours1;
+            if (params.startTimeLimit1) document.getElementById('start_time_limit_1').value = params.startTimeLimit1;
+            if (params.endTimeLimit1) document.getElementById('end_time_limit_1').value = params.endTimeLimit1;
+            
+            if (params.premiumToggle !== undefined) {
+                const toggle = document.getElementById('premium_toggle');
+                toggle.checked = params.premiumToggle;
+                const section = document.getElementById('premium-section');
+                if (params.premiumToggle) {
+                    section.classList.remove('hidden');
+                } else {
+                    section.classList.add('hidden');
+                }
+            }
+            
+            if (params.hourlyWage2) document.getElementById('hourly_wage_2').value = params.hourlyWage2;
+            if (params.avgHours2) document.getElementById('avg_hours_per_shift_2').value = params.avgHours2;
+            if (params.startTimeLimit2) document.getElementById('start_time_limit_2').value = params.startTimeLimit2;
+            if (params.endTimeLimit2) document.getElementById('end_time_limit_2').value = params.endTimeLimit2;
+            
+            if (params.jobRatio) {
+                const ratioInput = document.getElementById('job_ratio');
+                ratioInput.value = params.jobRatio;
+                document.getElementById('job_ratio_value').textContent = `バイト1 ${10 - params.jobRatio} : バイト2 ${params.jobRatio}`;
+            }
+        } catch (e) {
+            console.error('Failed to parse user params from localStorage', e);
+        }
+    }
 }

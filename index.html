@@ -28,7 +28,10 @@
         <main class="app-content">
             <!-- 左カラム: 入力フォーム -->
             <section class="form-section glass-card">
-                <h2>🎯 条件を入力する</h2>
+                <div class="form-header-wrapper">
+                    <h2>🎯 条件を入力する</h2>
+                    <button type="button" id="reset-all-btn" class="btn-reset-all" title="入力値と予定をすべて初期化します">🔄 全てリセット</button>
+                </div>
                 <form id="simulator-form" onsubmit="event.preventDefault();">
                     
                     <!-- 目標金額 & 現在の貯金 -->
