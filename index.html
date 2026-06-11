@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>旅プランナー | バイトスケジュールシミュレーター</title>
+    <meta name="description" content="アルバイトをする学生向けに、旅行の目標金額を達成するために必要なバイトスケジュールを自動計算・シミュレーションする無料ツールです。掛け持ちシミュレーション（プレミアム機能）も搭載。">
+    <!-- Google Fonts: Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Style CSS -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- ヘッダー -->
+        <header class="app-header">
+            <div class="header-logo">
+                <span class="logo-icon">✈️</span>
+                <h1>旅プランナー</h1>
+            </div>
+            <p class="header-tagline">国内旅行の目標金額を達成するためのバイトスケジュール自動計算</p>
+        </header>
+
+        <main class="app-content">
+            <!-- 左カラム: 入力フォーム -->
+            <section class="form-section glass-card">
+                <h2>🎯 条件を入力する</h2>
+                <form id="simulator-form" onsubmit="event.preventDefault();">
+                    
+                    <!-- 目標金額 & 現在の貯金 -->
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="target_amount">目標金額 (円)</label>
+                            <input type="number" id="target_amount" min="1" value="150000" placeholder="例: 150000" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="current_savings">現在の貯金額 (円)</label>
+                            <input type="number" id="current_savings" min="0" value="20000" placeholder="例: 0">
+                        </div>
+                    </div>
+
+                    <!-- 期限指定 -->
+                    <div class="form-group">
+                        <label>目標期限</label>
+                        <div class="radio-toggle-group">
+                            <label class="radio-label">
+                                <input type="radio" name="deadline_type" value="date" checked>
+                                <span>日付で指定</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="deadline_type" value="period">
+                                <span>期間で指定</span>
+                            </label>
+                        </div>
+
+                        <!-- 日付入力 -->
+                        <div id="deadline-date-group" class="input-dynamic-group">
+                            <input type="date" id="deadline_date" required>
+                            <small class="helper-text">本日（2026年6月10日）より後の日付を選択してください。</small>
+                        </div>
+
+                        <!-- 期間入力 -->
+                        <div id="deadline-period-group" class="input-dynamic-group hidden">
+                            <div class="period-input-container">
+                                <input type="number" id="deadline_period" min="1" value="3" placeholder="例: 3">
+                                <select id="deadline_unit">
+                                    <option value="month">か月後</option>
+                                    <option value="week">週間後</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- カレンダー操作ガイド -->
+                    <div class="form-group info-box">
+                        <small class="helper-text-guide">📅 <strong>操作手順:</strong><br>1. まず右のカレンダーの日付をクリックして、ご自身の予定（授業や用事など）を設定します。<br>2. 予定の入力後、カレンダー上の「🎯 シフト提案を生成」ボタンを押すと、予定を避けた空き時間に最適なシフトが自動配置・アドバイスされます。</small>
+                    </div>
+
+                    <!-- バイト1の設定 -->
+                    <div class="job-card-form">
+                        <h3>💼 バイト1 (基本の仕事)</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="hourly_wage_1">時給 (円)</label>
+                                <input type="number" id="hourly_wage_1" min="1" value="1100" placeholder="例: 1100" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="avg_hours_per_shift_1">1回あたり平均勤務 (時間)</label>
+                                <input type="number" id="avg_hours_per_shift_1" min="0.5" step="0.5" value="5" placeholder="例: 5" required>
+                            </div>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="start_time_limit_1">勤務可能 開始時刻</label>
+                                <input type="time" id="start_time_limit_1" value="09:00" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="end_time_limit_1">勤務可能 終了時刻</label>
+                                <input type="time" id="end_time_limit_1" value="22:00" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- プレミアム機能トグル -->
+                    <div class="premium-toggle-container">
+                        <div class="premium-label-wrapper">
+                            <span class="premium-badge-icon">👑</span>
+                            <div>
+                                <label class="premium-main-label" for="premium_toggle">掛け持ちシミュレーション (プレミアム機能)</label>
+                                <span class="premium-sub-label">2つのバイトの比率を調整して計画できます</span>
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="premium_toggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+
+                    <!-- バイト2の設定 (プレミアム) -->
+                    <div id="premium-section" class="job-card-form premium-section-bg hidden">
+                        <h3>💼 バイト2 (掛け持ち用)</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="hourly_wage_2">時給 (円)</label>
+                                <input type="number" id="hourly_wage_2" min="1" value="1200" placeholder="例: 1200">
+                            </div>
+                            <div class="form-group">
+                                <label for="avg_hours_per_shift_2">1回あたり平均勤務 (時間)</label>
+                                <input type="number" id="avg_hours_per_shift_2" min="0.5" step="0.5" value="4" placeholder="例: 4">
+                            </div>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="start_time_limit_2">勤務可能 開始時刻</label>
+                                <input type="time" id="start_time_limit_2" value="18:00">
+                            </div>
+                            <div class="form-group">
+                                <label for="end_time_limit_2">勤務可能 終了時刻</label>
+                                <input type="time" id="end_time_limit_2" value="23:00">
+                            </div>
+                        </div>
+
+                        <!-- 収入の比率調整 -->
+                        <div class="form-group ratio-slider-group">
+                            <label for="job_ratio">稼ぎの比率 (バイト1 : バイト2)</label>
+                            <input type="range" id="job_ratio" min="1" max="9" value="5" class="custom-range-slider">
+                            <div class="ratio-labels">
+                                <span>バイト1優先</span>
+                                <span id="job_ratio_value" class="ratio-val">バイト1 5 : バイト2 5</span>
+                                <span>バイト2優先</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+            </section>
+
+            <!-- 右カラム: シミュレーション結果 -->
+            <section class="result-section">
+                <!-- ロードマップ表示エリア -->
+                <div id="roadmap-result">
+                    <!-- JSで動的にロードマップカードが挿入される -->
+                </div>
+
+                <!-- グラフエリア -->
+                <div class="chart-card glass-card">
+                    <h3>📈 貯蓄推移のシミュレーション</h3>
+                    <div class="chart-container">
+                        <canvas id="savingsChart"></canvas>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2026 旅プランナー. 本日の基準日: 2026年6月10日</p>
+        </footer>
+    </div>
+
+    <!-- 予定設定モーダル -->
+    <div id="schedule-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h3 id="modal-date-title">予定を設定する</h3>
+                <button type="button" id="close-modal-btn" class="close-btn">&times;</button>
+            </div>
+            
+            <!-- 登録済み予定一覧エリア -->
+            <div class="modal-body-section">
+                <h4>📅 登録済みの予定</h4>
+                <div id="modal-schedules-list" class="schedules-list-container">
+                    <!-- JSで動的に登録済み予定のリストが挿入されます -->
+                </div>
+            </div>
+
+            <!-- 新規予定追加フォーム -->
+            <div class="modal-body-section border-top-divider">
+                <h4>➕ 新しい予定を追加</h4>
+                <form id="modal-form">
+                    <input type="hidden" id="modal-date-val">
+                    <div class="form-group">
+                        <label for="modal-schedule-title">予定名 (例: 授業、サークルなど)</label>
+                        <input type="text" id="modal-schedule-title" placeholder="例: 授業" required>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="modal-start-time">開始時間</label>
+                            <input type="time" id="modal-start-time" value="10:00" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="modal-end-time">終了時間</label>
+                            <input type="time" id="modal-end-time" value="15:00" required>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">予定を追加</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script JS -->
+    <script src="app.js"></script>
+</body>
+</html>
